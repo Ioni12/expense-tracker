@@ -1,4 +1,7 @@
 const Expense = require("../models/Expense");
+const { sendBudgetAlert } = require("../services/emailService");
+
+const BUDGET_LIMIT = 1000;
 
 const getExpenses = async (req, res) => {
   try {
@@ -30,6 +33,52 @@ const createExpense = async (req, res) => {
 
     const expense = new Expense({ categoryId, amount, description });
     await expense.save();
+
+    const totalSpent = await Expense.aggregate([
+      {
+        $match: {
+          categoryId: categoryId,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    const total =
+      totalSpent.length > 0 ? Number(totalSpent[0].total) : Number(amount);
+
+    if (total > BUDGET_LIMIT) {
+      const populatedExpense = await Expense.findById(expense._id).populate(
+        "categoryId",
+        "name"
+      );
+      const categoryName =
+        populatedExpense.categoryId?.name || "unknown category";
+
+      sendBudgetAlert(
+        process.env.BREVO_RECEIVER_EMAIL,
+        total,
+        BUDGET_LIMIT,
+        categoryName
+      ).catch((err) => {
+        console.log("failed to send email: ", err);
+      });
+
+      return res.status(200).json({
+        ok: true,
+        data: expense,
+        budgetWarning: {
+          message: `Budget exceeded for ${categoryName}!`,
+          totalSpent: total,
+          budgetLimit: BUDGET_LIMIT,
+          overBy: (total - BUDGET_LIMIT).toFixed(2),
+        },
+      });
+    }
 
     return res.status(200).json({ ok: true, data: expense });
   } catch (error) {
