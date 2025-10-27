@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ..",
-    "dev": "concurrently \"cd backend && npm run dev\" \" cd frontend && npm run dev \""
+    "install-all": "npm install && cd Backend && npm install && cd ../frontend && npm install && cd ..",
+    "dev": "concurrently \"cd Backend && npm run dev\" \" cd frontend && npm run dev \""
   },
   "repository": {
     "type": "git",
