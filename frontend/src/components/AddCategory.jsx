@@ -8,8 +8,6 @@ const AddCategory = ({ onCategoryCreated }) => {
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
     setError(null);
     setSuccess(false);
 

@@ -1,8 +1,15 @@
+import React, { useState } from "react";
 import ExpenseList from "./components/ExpenseList";
 import CategoryList from "./components/CategoryList";
 import AddExpense from "./components/AddExpense";
 
 function App() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleExpenseAdded = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-4xl mx-auto px-4 space-y-6">
@@ -11,11 +18,11 @@ function App() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <AddExpense />
+          <AddExpense onExpenseAdded={handleExpenseAdded} />
           <CategoryList />
         </div>
 
-        <ExpenseList />
+        <ExpenseList key={refreshKey} />
       </div>
     </div>
   );

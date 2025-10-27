@@ -34,12 +34,7 @@ const createExpense = async (req, res) => {
     const expense = new Expense({ categoryId, amount, description });
     await expense.save();
 
-    const totalSpent = await Expense.aggregate([
-      {
-        $match: {
-          categoryId: categoryId,
-        },
-      },
+    const totalResult = await Expense.aggregate([
       {
         $group: {
           _id: null,
@@ -48,10 +43,13 @@ const createExpense = async (req, res) => {
       },
     ]);
 
-    const total =
-      totalSpent.length > 0 ? Number(totalSpent[0].total) : Number(amount);
+    const grandTotal =
+      totalResult.length > 0 ? Number(totalResult[0].total) : 0;
+    const previousTotal = grandTotal - amount;
+    const justExceeded =
+      previousTotal <= BUDGET_LIMIT && grandTotal > BUDGET_LIMIT;
 
-    if (total > BUDGET_LIMIT) {
+    if (grandTotal > BUDGET_LIMIT && justExceeded) {
       const populatedExpense = await Expense.findById(expense._id).populate(
         "categoryId",
         "name"
@@ -61,26 +59,33 @@ const createExpense = async (req, res) => {
 
       sendBudgetAlert(
         process.env.BREVO_RECEIVER_EMAIL,
-        total,
+        grandTotal,
         BUDGET_LIMIT,
         categoryName
       ).catch((err) => {
-        console.log("failed to send email: ", err);
+        console.error("Failed to send budget alert email:", err);
       });
 
       return res.status(200).json({
         ok: true,
         data: expense,
         budgetWarning: {
-          message: `Budget exceeded for ${categoryName}!`,
-          totalSpent: total,
+          message: `Total budget limit of $${BUDGET_LIMIT} exceeded!`,
+          totalSpent: grandTotal.toFixed(2),
           budgetLimit: BUDGET_LIMIT,
-          overBy: (total - BUDGET_LIMIT).toFixed(2),
+          overBy: (grandTotal - BUDGET_LIMIT).toFixed(2),
         },
       });
     }
 
-    return res.status(200).json({ ok: true, data: expense });
+    return res.status(200).json({
+      ok: true,
+      data: expense,
+      totals: {
+        grandTotal: grandTotal.toFixed(2),
+        remainingBudget: Math.max(0, BUDGET_LIMIT - grandTotal).toFixed(2),
+      },
+    });
   } catch (error) {
     return res.status(400).json({ ok: false, error: error.message });
   }

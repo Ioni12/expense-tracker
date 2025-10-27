@@ -11,7 +11,7 @@ export const getExpenses = async () => {
     if (!response.data.ok) {
       throw new Error(response.data.error);
     }
-
+    console.log(response.data);
     return response.data;
   } catch (error) {
     throw new Error(error.message || "Failed to fetch Expenses");

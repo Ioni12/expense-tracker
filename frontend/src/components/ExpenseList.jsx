@@ -50,12 +50,17 @@ const ExpenseList = () => {
             key={expense._id}
             className="flex justify-between items-center p-4 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors"
           >
-            <div>
-              <span className="font-medium text-gray-800">
-                {expense.description}
-              </span>
-              <span className="ml-4 text-green-600 font-semibold">
-                ${expense.amount.toFixed(2)}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                <span className="font-medium text-gray-800">
+                  {expense.description}
+                </span>
+                <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                  {expense.categoryId.name}
+                </span>
+              </div>
+              <span className="text-green-600 font-semibold text-lg">
+                ${expense.amount}
               </span>
             </div>
             <button
